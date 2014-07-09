@@ -21,6 +21,7 @@
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 
 import os
+import re
 import sys
 import time
 
@@ -563,9 +564,12 @@ class LinuxBridgeManager:
 
     def vxlan_module_supported(self):
         try:
-            utils.execute(cmd=['modinfo', 'vxlan'])
-            return True
-        except RuntimeError:
+            pattern = re.compile('^vxlan\\b')
+            return any(pattern.match(line) for
+                line in open('/proc/modules'))
+        except IOError:
+            LOG.warning(_("Failed to read /proc/modules so cannot determine "
+                          "if vxlan module is available"))
             return False
 
     def check_vxlan_support(self):

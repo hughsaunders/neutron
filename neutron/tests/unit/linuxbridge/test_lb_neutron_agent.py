@@ -867,19 +867,19 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                                   vxlan_ucast_supported=False,
                                   vxlan_mcast_supported=False)
 
-    def _check_vxlan_module_supported(self, expected, execute_side_effect):
-        with mock.patch.object(
-                utils, 'execute',
-                side_effect=execute_side_effect):
+    def _check_vxlan_module_supported(self, expected, return_value):
+        with mock.patch(
+                '__builtin__.open',
+                return_value=return_value):
             self.assertEqual(expected, self.lbm.vxlan_module_supported())
 
     def test_vxlan_module_supported(self):
         self._check_vxlan_module_supported(
             expected=True,
-            execute_side_effect=None)
+            return_value=['bridge', 'vxlan', 'stp'])
         self._check_vxlan_module_supported(
             expected=False,
-            execute_side_effect=RuntimeError())
+            return_value=['bridge', 'stp'])
 
     def _check_vxlan_ucast_supported(
             self, expected, l2_population, iproute_arg_supported, fdb_append):
