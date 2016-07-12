@@ -114,13 +114,14 @@ class NetworkMetadataProxyHandler(object):
 
 
 class ProxyDaemon(daemon.Daemon):
-    def __init__(self, pidfile, port, network_id=None, router_id=None,
+    def __init__(self, pidfile, bind_address, port, network_id=None, router_id=None,
                  user=None, group=None, watch_log=True):
         uuid = network_id or router_id
         super(ProxyDaemon, self).__init__(pidfile, uuid=uuid, user=user,
                                          group=group, watch_log=watch_log)
         self.network_id = network_id
         self.router_id = router_id
+        self.bind_address = bind_address
         self.port = port
 
     def run(self):
@@ -128,7 +129,7 @@ class ProxyDaemon(daemon.Daemon):
             self.network_id,
             self.router_id)
         proxy = wsgi.Server('neutron-network-metadata-proxy')
-        proxy.start(handler, self.port)
+        proxy.start(handler, self.port, self.bind_address)
 
         # Drop privileges after port bind
         super(ProxyDaemon, self).run()
@@ -153,6 +154,9 @@ def main():
                     default=9697,
                     help=_("TCP Port to listen for metadata server "
                            "requests.")),
+        cfg.IPAddress('bind_address',
+                      default='0.0.0.0',
+                      help=_("IP address for the metadata proxy to bind to")),
         cfg.StrOpt('metadata_proxy_socket',
                    default='$state_path/metadata_proxy',
                    help=_('Location of Metadata Proxy UNIX domain '
@@ -177,6 +181,7 @@ def main():
     utils.log_opt_values(LOG)
 
     proxy = ProxyDaemon(cfg.CONF.pid_file,
+                        cfg.CONF.bind_address,
                         cfg.CONF.metadata_port,
                         network_id=cfg.CONF.network_id,
                         router_id=cfg.CONF.router_id,

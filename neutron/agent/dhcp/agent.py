@@ -432,10 +432,10 @@ class DhcpAgent(manager.Manager):
                                  'router_id': router_ports[0].device_id})
                 kwargs = {'router_id': router_ports[0].device_id}
                 self._metadata_routers[network.id] = router_ports[0].device_id
-
+        bind_address = constants.METADATA_CIDR.rstrip('/32')
         metadata_driver.MetadataDriver.spawn_monitored_metadata_proxy(
             self._process_monitor, network.namespace, dhcp.METADATA_PORT,
-            self.conf, **kwargs)
+            self.conf, bind_address=bind_address, **kwargs)
 
     def disable_isolated_metadata_proxy(self, network):
         if (self.conf.enable_metadata_network and

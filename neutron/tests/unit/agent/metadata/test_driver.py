@@ -112,6 +112,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 '--router_id=%s' % router_id,
                 mock.ANY,
                 '--metadata_port=%s' % metadata_port,
+                '--bind_address=0.0.0.0',
                 '--metadata_proxy_user=%s' % expected_user,
                 '--metadata_proxy_group=%s' % expected_group,
                 '--debug',

@@ -856,10 +856,12 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                        '.spawn_monitored_metadata_proxy')
         with mock.patch(method_path) as spawn:
             self.dhcp.enable_isolated_metadata_proxy(network)
+            bind_address = constants.METADATA_CIDR.rstrip('/32')
             spawn.assert_called_once_with(self.dhcp._process_monitor,
                                           network.namespace,
                                           dhcp.METADATA_PORT,
                                           cfg.CONF,
+                                          bind_address=bind_address,
                                           router_id='forzanapoli')
 
     def test_enable_isolated_metadata_proxy_with_metadata_network(self):

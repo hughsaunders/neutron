@@ -50,21 +50,23 @@ class MetadataDriver(object):
 
     @classmethod
     def metadata_mangle_rules(cls, mark):
-        return [('PREROUTING', '-d 169.254.169.254/32 '
+        return [('PREROUTING', '-d %(metadata_cidr)s '
                  '-i %(interface_name)s '
                  '-p tcp -m tcp --dport 80 '
                  '-j MARK --set-xmark %(value)s/%(mask)s' %
-                 {'interface_name': namespaces.INTERNAL_DEV_PREFIX + '+',
+                 {'metadata_cidr': constants.METADATA_CIDR,
+                  'interface_name': namespaces.INTERNAL_DEV_PREFIX + '+',
                   'value': mark,
                   'mask': constants.ROUTER_MARK_MASK})]
 
     @classmethod
     def metadata_nat_rules(cls, port):
-        return [('PREROUTING', '-d 169.254.169.254/32 '
+        return [('PREROUTING', '-d %(metadata_cidr)s '
                  '-i %(interface_name)s '
                  '-p tcp -m tcp --dport 80 -j REDIRECT '
                  '--to-ports %(port)s' %
-                 {'interface_name': namespaces.INTERNAL_DEV_PREFIX + '+',
+                 {'metadata_cidr': constants.METADATA_CIDR,
+                  'interface_name': namespaces.INTERNAL_DEV_PREFIX + '+',
                   'port': port})]
 
     @classmethod
@@ -82,7 +84,7 @@ class MetadataDriver(object):
 
     @classmethod
     def _get_metadata_proxy_callback(cls, port, conf, network_id=None,
-                                     router_id=None):
+                                     router_id=None, bind_address='0.0.0.0'):
         uuid = network_id or router_id
         if uuid is None:
             raise exceptions.NetworkIdOrRouterIdRequiredError()
@@ -101,6 +103,7 @@ class MetadataDriver(object):
                          '--metadata_proxy_socket=%s' % metadata_proxy_socket,
                          lookup_param,
                          '--state_path=%s' % conf.state_path,
+                         '--bind_address=%s' % bind_address,
                          '--metadata_port=%s' % port,
                          '--metadata_proxy_user=%s' % user,
                          '--metadata_proxy_group=%s' % group]
@@ -113,10 +116,12 @@ class MetadataDriver(object):
 
     @classmethod
     def spawn_monitored_metadata_proxy(cls, monitor, ns_name, port, conf,
-                                       network_id=None, router_id=None):
+                                       network_id=None, router_id=None,
+                                       bind_address='0.0.0.0'):
         uuid = network_id or router_id
         callback = cls._get_metadata_proxy_callback(
-            port, conf, network_id=network_id, router_id=router_id)
+            port, conf, network_id=network_id, router_id=router_id,
+            bind_address=bind_address)
         pm = cls._get_metadata_proxy_process_manager(uuid, conf,
                                                      ns_name=ns_name,
                                                      callback=callback)
